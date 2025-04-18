@@ -142,17 +142,38 @@ if submitted:
         st.subheader("🔹 Interactive 3D Pallet Stack")
 
         def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0):
-            return go.Mesh3d(
-                x=[x, x+dx, x+dx, x, x, x+dx, x+dx, x],
-                y=[y, y, y+dy, y+dy, y, y, y+dy, y+dy],
-                z=[z, z, z, z, z+dz, z+dz, z+dz, z+dz],
-                i=[0, 0, 0, 4, 4, 5],
-                j=[1, 2, 3, 5, 6, 6],
-                k=[2, 3, 1, 6, 7, 7],
-                opacity=opacity,
-                color=color,
-                flatshading=True
-            )
+    # Define the 8 corners of the cuboid
+    vertices = [
+        [x, y, z],
+        [x + dx, y, z],
+        [x + dx, y + dy, z],
+        [x, y + dy, z],
+        [x, y, z + dz],
+        [x + dx, y, z + dz],
+        [x + dx, y + dy, z + dz],
+        [x, y + dy, z + dz],
+    ]
+
+    # Define the 12 triangles (2 per face)
+    faces = [
+        (0, 1, 2), (0, 2, 3),  # bottom
+        (4, 5, 6), (4, 6, 7),  # top
+        (0, 1, 5), (0, 5, 4),  # front
+        (1, 2, 6), (1, 6, 5),  # right
+        (2, 3, 7), (2, 7, 6),  # back
+        (3, 0, 4), (3, 4, 7),  # left
+    ]
+
+    x_vals, y_vals, z_vals = zip(*vertices)
+    i, j, k = zip(*faces)
+
+    return go.Mesh3d(
+        x=x_vals, y=y_vals, z=z_vals,
+        i=i, j=j, k=k,
+        opacity=opacity,
+        color=color,
+        flatshading=True
+    )
 
         objects = []
         pallet_height_actual = 5.5
@@ -184,8 +205,8 @@ if submitted:
                 xaxis_title='Length',
                 yaxis_title='Width',
                 zaxis_title='Height',
-                aspectratio=dict(x=2, y=1.8, z=1.5),
-                camera=dict(eye=dict(x=1.5, y=1.5, z=1)),
+                aspectratio=dict(x=1, y=1, z=2),
+                camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),),
             ),
             title="3D Pallet Stack – Layer View + Stack Volume",
             margin=dict(l=0, r=0, t=40, b=0),
