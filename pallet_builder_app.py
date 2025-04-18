@@ -202,7 +202,7 @@ if submitted:
         ax.view_init(elev=25, azim=135)
         plt.tight_layout()
 
-                import io
+                        import io
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
         plt.close()
