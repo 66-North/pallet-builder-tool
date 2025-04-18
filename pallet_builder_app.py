@@ -223,7 +223,8 @@ if submitted:
         ax.set_zlim(0, z_start + product_height)
         ax.view_init(elev=25, azim=135)
                 # Draw transparent bounding box for full stack
-        draw_box(ax, 0, 0, z_start, pallet_length, pallet_width, layers_per_pallet * product_height, face_color='none', edge_color='gray', alpha=0.2)
+        # Transparent bounding box disabled due to rendering issues
+        # draw_box(ax, 0, 0, z_start, pallet_length, pallet_width, layers_per_pallet * product_height, face_color='none', edge_color='gray', alpha=0.2)
         plt.tight_layout()
 
         buf = io.BytesIO()
