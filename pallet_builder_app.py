@@ -63,10 +63,11 @@ with st.form("pallet_input_form"):
     product_weight = st.number_input(f"Product Weight ({weight_unit})", value=product_weight)
     rotation_allowed = st.checkbox("Allow Rotation", value=True)
 
+    view_option = st.radio("Select Visualization View", ["2D Top-Down", "3D Interactive"])
     submitted = st.form_submit_button("Calculate & Visualize")
 
 if submitted:
-    view_option = st.radio("Select Visualization View", ["2D Top-Down", "3D Interactive"])
+    
 
     if rotation_allowed:
         fit_normal = (pallet_length // product_length) * (pallet_width // product_width)
