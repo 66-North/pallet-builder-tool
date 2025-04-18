@@ -179,6 +179,13 @@ if submitted:
         ax = fig.add_subplot(111, projection='3d')
 
         def draw_box(ax, x, y, z, dx, dy, dz, face_color='skyblue', edge_color='black', alpha=1.0):
+    epsilon = 0.05  # slight offset to avoid rendering artifacts
+    x += epsilon
+    y += epsilon
+    z += epsilon
+    dx -= 2 * epsilon
+    dy -= 2 * epsilon
+    dz -= 2 * epsilon
             verts = [
                 [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
                 [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
