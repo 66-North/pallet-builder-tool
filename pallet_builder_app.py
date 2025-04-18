@@ -173,4 +173,4 @@ if submitted:
         st.pyplot(fig_side)
 
     else:
-        st.info("3D rendering is temporarily disabled due to compatibility issues.")", data=buf, file_name="pallet_render.png", mime="image/png")
+        st.info("3D rendering is temporarily disabled due to compatibility issues.")
