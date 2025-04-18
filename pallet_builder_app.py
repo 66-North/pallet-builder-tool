@@ -4,6 +4,7 @@ import matplotlib.patches as patches
 import pandas as pd
 import base64
 from PIL import Image
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 
 st.set_page_config(page_title="Pallet Builder Tool", layout="centered")
 
@@ -47,12 +48,10 @@ else:
 # Input form
 with st.form("pallet_input_form"):
     col1, col2 = st.columns(2)
-
     with col1:
         pallet_length = st.number_input(f"Pallet Length ({unit})", value=pallet_length)
         pallet_width = st.number_input(f"Pallet Width ({unit})", value=pallet_width)
         pallet_height = st.number_input(f"Max Stack Height ({unit})", value=pallet_height)
-
     with col2:
         product_length = st.number_input(f"Product Length ({unit})", value=product_length)
         product_width = st.number_input(f"Product Width ({unit})", value=product_width)
@@ -61,10 +60,8 @@ with st.form("pallet_input_form"):
     total_units = st.number_input("Total Units to Ship", value=20, step=1)
     product_weight = st.number_input(f"Product Weight ({weight_unit})", value=product_weight)
     rotation_allowed = st.checkbox("Allow Rotation", value=True)
-
     pallet_base_weight = st.number_input(f"Pallet Base Weight (avg ~38 {weight_unit})", value=38.0)
     wrap_weight = st.number_input(f"Wrapping Material Weight (avg ~2 {weight_unit})", value=2.0)
-
     view_option = st.radio("Select Visualization View", ["2D Top-Down", "Static 3D Render"])
     submitted = st.form_submit_button("Calculate & Visualize")
 
@@ -158,12 +155,8 @@ if submitted:
 
     else:
         st.subheader("🖼 Static 3D Pallet Render")
-        static_path = "/mnt/data/simplified_3d_pallet_render.png"
-        import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
-import numpy as np
 
-                fig = plt.figure(figsize=(10, 8))
+        fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
 
         def draw_box(ax, x, y, z, dx, dy, dz, face_color='skyblue', edge_color='black', alpha=1.0):
@@ -187,12 +180,9 @@ import numpy as np
             ax.add_collection3d(Poly3DCollection(faces, facecolors=face_color, edgecolors=edge_color, alpha=alpha))
             ax.add_collection3d(Line3DCollection(edges, colors=edge_color, linewidths=0.8))
 
-        # Draw pallet
         draw_box(ax, 0, 0, 0, pallet_length, pallet_width, 5.5, face_color='saddlebrown')
-
-        # Draw product boxes (1 layer)
-        drawn = 0
         z_start = 5.5
+        drawn = 0
         y = 0
         while y + unit_w <= pallet_width:
             x = 0
@@ -210,8 +200,8 @@ import numpy as np
         ax.set_ylim(0, pallet_width)
         ax.set_zlim(0, z_start + product_height)
         ax.view_init(elev=25, azim=135)
-
         plt.tight_layout()
+
         render_path = "/mnt/data/auto_generated_pallet_render.png"
         plt.savefig(render_path)
         plt.close()
@@ -219,4 +209,4 @@ import numpy as np
         img = Image.open(render_path)
         st.image(img, caption="Static 3D Pallet View")
         with open(render_path, "rb") as f:
-            st.download_button("📥 Download Render (PNG)", f, file_name="pallet_render.png", mime="image/png")            st.warning("Static image not found. Upload or generate it to display.")
+            st.download_button("📥 Download Render (PNG)", f, file_name="pallet_render.png", mime="image/png")
