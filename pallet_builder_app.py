@@ -67,8 +67,6 @@ with st.form("pallet_input_form"):
     submitted = st.form_submit_button("Calculate & Visualize")
 
 if submitted:
-    
-
     if rotation_allowed:
         fit_normal = (pallet_length // product_length) * (pallet_width // product_width)
         fit_rotated = (pallet_length // product_width) * (pallet_width // product_length)
@@ -141,40 +139,28 @@ if submitted:
     else:
         st.subheader("🔹 Interactive 3D Pallet Stack")
 
-        def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0'):
-    # Define the 8 corners of the cuboid
-    # Define the 8 corners of the cuboid
-    vertices = [
-        [x, y, z],
-        [x + dx, y, z],
-        [x + dx, y + dy, z],
-        [x, y + dy, z],
-        [x, y, z + dz],
-        [x + dx, y, z + dz],
-        [x + dx, y + dy, z + dz],
-        [x, y + dy, z + dz],
-    ]
-
-    # Define the 12 triangles (2 per face)
-    faces = [
-        (0, 1, 2), (0, 2, 3),  # bottom
-        (4, 5, 6), (4, 6, 7),  # top
-        (0, 1, 5), (0, 5, 4),  # front
-        (1, 2, 6), (1, 6, 5),  # right
-        (2, 3, 7), (2, 7, 6),  # back
-        (3, 0, 4), (3, 4, 7),  # left
-    ]
-
-    x_vals, y_vals, z_vals = zip(*vertices)
-    i, j, k = zip(*faces)
-
-    return go.Mesh3d(
-        x=x_vals, y=y_vals, z=z_vals,
-        i=i, j=j, k=k,
-        opacity=opacity,
-        color=color,
-        flatshading=True
-    )
+        def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0):
+            vertices = [
+                [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
+                [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
+            ]
+            faces = [
+                (0, 1, 2), (0, 2, 3),
+                (4, 5, 6), (4, 6, 7),
+                (0, 1, 5), (0, 5, 4),
+                (1, 2, 6), (1, 6, 5),
+                (2, 3, 7), (2, 7, 6),
+                (3, 0, 4), (3, 4, 7)
+            ]
+            x_vals, y_vals, z_vals = zip(*vertices)
+            i, j, k = zip(*faces)
+            return go.Mesh3d(
+                x=x_vals, y=y_vals, z=z_vals,
+                i=i, j=j, k=k,
+                opacity=opacity,
+                color=color,
+                flatshading=True
+            )
 
         objects = []
         pallet_height_actual = 5.5
@@ -210,6 +196,7 @@ if submitted:
                 camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
             ),
             margin=dict(l=0, r=0, t=40, b=0),
-            showlegend=False
+            showlegend=False,
+            title="3D Pallet Stack – Layer View + Stack Volume"
         )
         components.html(fig3d.to_html(), height=600)
