@@ -137,7 +137,18 @@ if submitted:
         st.pyplot(fig)
 
     else:
-        st.subheader("🔹 Interactive 3D Pallet Stack")
+    st.subheader("🔹 Interactive 3D Pallet Stack")
+
+    # Display static 3D render with outlines
+    from PIL import Image
+    static_path = "static_3d_pallet_outline.png"
+    try:
+        image = Image.open(f"/mnt/data/{static_path}")
+        st.image(image, caption="Static 3D Pallet Stack with Outlined Boxes", use_column_width=True)
+        with open(f"/mnt/data/{static_path}", "rb") as f:
+            btn = st.download_button(label="📥 Download 3D Render (PNG)", data=f, file_name="pallet_3d_render.png", mime="image/png")
+    except FileNotFoundError:
+        st.warning("Static image not available yet.")
 
         def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0):
             vertices = [
