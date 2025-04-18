@@ -130,6 +130,8 @@ if submitted:
     href = f'<a href="data:file/csv;base64,{b64}" download="pallet_summary.csv">📥 Download Summary as CSV</a>'
     st.markdown(href, unsafe_allow_html=True)
 
+    view_detail = st.radio("3D Detail Level", ["Simplified (3 layers)", "Full Stack"])
+
     if view_option == "2D Top-Down":
         st.subheader("📐 Top-Down and Side Pallet Views")
 
@@ -144,7 +146,7 @@ if submitted:
 
         x = y = units_drawn = 0
         while y + unit_w <= pallet_width:
-            x = layer * 0.1  # slight stagger in X by layer
+            x = 0
             while x + unit_l <= pallet_length:
                 ax_top.add_patch(patches.Rectangle((x, y), unit_l, unit_w, edgecolor='blue', facecolor='lightblue'))
                 units_drawn += 1
@@ -162,7 +164,7 @@ if submitted:
         ax_side.set_xlabel(f'Length ({unit})')
         ax_side.set_ylabel(f'Height ({unit})')
         ax_side.grid(True, linestyle='--', linewidth=0.5)
-        for layer in reversed(range(layers_per_pallet)):
+        for layer in range(layers_per_pallet) if view_detail == "Full Stack" else range(min(3, layers_per_pallet)):
             y_pos = 5.5 + layer * product_height
             x = 0
             while x + unit_l <= pallet_length:
@@ -176,32 +178,25 @@ if submitted:
         st.subheader("🖼 Static 3D Pallet Render")
 
         def draw_box(ax, x, y, z, dx, dy, dz, face_color='skyblue', edge_color='black', alpha=1.0):
-            epsilon = 0.15
-            x += epsilon
-            y += epsilon
-            z += epsilon
-            dx -= 2 * epsilon
-            dy -= 2 * epsilon
-            dz -= 2 * epsilon
-            verts = [
-                [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
-                [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
-            ]
-            faces = [
-                [verts[0], verts[1], verts[2], verts[3]],
-                [verts[4], verts[5], verts[6], verts[7]],
-                [verts[0], verts[1], verts[5], verts[4]],
-                [verts[2], verts[3], verts[7], verts[6]],
-                [verts[1], verts[2], verts[6], verts[5]],
-                [verts[4], verts[7], verts[3], verts[0]]
-            ]
-            edges = [
-                [verts[0], verts[1]], [verts[1], verts[2]], [verts[2], verts[3]], [verts[3], verts[0]],
-                [verts[4], verts[5]], [verts[5], verts[6]], [verts[6], verts[7]], [verts[7], verts[4]],
-                [verts[0], verts[4]], [verts[1], verts[5]], [verts[2], verts[6]], [verts[3], verts[7]]
-            ]
-            ax.add_collection3d(Poly3DCollection(faces, facecolors=face_color, edgecolors=edge_color, alpha=alpha))
-            ax.add_collection3d(Line3DCollection(edges, colors=edge_color, linewidths=0.8))
+    verts = [
+        [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
+        [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
+    ]
+    faces = [
+        [verts[0], verts[1], verts[2], verts[3]],
+        [verts[4], verts[5], verts[6], verts[7]],
+        [verts[0], verts[1], verts[5], verts[4]],
+        [verts[2], verts[3], verts[7], verts[6]],
+        [verts[1], verts[2], verts[6], verts[5]],
+        [verts[4], verts[7], verts[3], verts[0]]
+    ]
+    edges = [
+        [verts[0], verts[1]], [verts[1], verts[2]], [verts[2], verts[3]], [verts[3], verts[0]],
+        [verts[4], verts[5]], [verts[5], verts[6]], [verts[6], verts[7]], [verts[7], verts[4]],
+        [verts[0], verts[4]], [verts[1], verts[5]], [verts[2], verts[6]], [verts[3], verts[7]]
+    ]
+    ax.add_collection3d(Poly3DCollection(faces, facecolors=face_color, edgecolors=edge_color, alpha=1.0))
+    ax.add_collection3d(Line3DCollection(edges, colors=edge_color, linewidths=0.8))
 
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -210,7 +205,7 @@ if submitted:
         z_start = 5.5
         drawn = 0
         for layer in range(layers_per_pallet):
-            y = layer * 0.1  # slight stagger in Y by layer
+            y = 0
             color = plt.cm.Blues(layer / max(1, layers_per_pallet))
             while y + unit_w <= pallet_width:
                 x = 0
