@@ -137,7 +137,7 @@ if submitted:
         st.pyplot(fig)
 
     else:
-    st.subheader("🔹 Interactive 3D Pallet Stack")
+        st.subheader("🔹 Interactive 3D Pallet Stack")
 
     # Display static 3D render with outlines
     from PIL import Image
