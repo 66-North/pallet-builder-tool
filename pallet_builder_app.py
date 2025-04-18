@@ -1,10 +1,11 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pandas as pd
 import io
 import base64
+import plotly.graph_objects as go
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Pallet Builder Tool", layout="centered")
 
@@ -13,24 +14,36 @@ st.write("Enter product and pallet dimensions to visualize your pallet stacking 
 
 pallet_type = st.radio("Select Pallet Type", ["US Pallet (inches)", "EU Pallet (cm)"])
 
+# Presets
+preset = st.selectbox("Choose a Product Preset", ["Custom", "Small Box", "Large Box"])
+if preset == "Small Box":
+    product_length = 24
+    product_width = 18
+    product_height = 10
+    product_weight = 3.0
+elif preset == "Large Box":
+    product_length = 39
+    product_width = 21
+    product_height = 15
+    product_weight = 6.0
+else:
+    product_length = 39
+    product_width = 21
+    product_height = 9
+    product_weight = 5.0
+
 if pallet_type == "EU Pallet (cm)":
     unit = "cm"
     weight_unit = "kg"
     pallet_length = 120
     pallet_width = 80
     pallet_height = 180
-    product_length = 100
-    product_width = 50
-    product_height = 22
 else:
     unit = "in"
     weight_unit = "lbs"
     pallet_length = 48
     pallet_width = 40
     pallet_height = 60
-    product_length = 39
-    product_width = 21
-    product_height = 9
 
 # Input form
 with st.form("pallet_input_form"):
@@ -47,12 +60,14 @@ with st.form("pallet_input_form"):
         product_height = st.number_input(f"Product Height ({unit})", value=product_height)
 
     total_units = st.number_input("Total Units to Ship", value=20, step=1)
-    product_weight = st.number_input(f"Product Weight ({weight_unit})", value=5.0)
+    product_weight = st.number_input(f"Product Weight ({weight_unit})", value=product_weight)
     rotation_allowed = st.checkbox("Allow Rotation", value=True)
 
     submitted = st.form_submit_button("Calculate & Visualize")
 
 if submitted:
+    view_option = st.radio("Select Visualization View", ["2D Top-Down", "3D Interactive"])
+
     if rotation_allowed:
         fit_normal = (pallet_length // product_length) * (pallet_width // product_width)
         fit_rotated = (pallet_length // product_width) * (pallet_width // product_length)
@@ -93,79 +108,83 @@ if submitted:
     href = f'<a href="data:file/csv;base64,{b64}" download="pallet_summary.csv">📥 Download Summary as CSV</a>'
     st.markdown(href, unsafe_allow_html=True)
 
-    # Top-down visualization
-    st.subheader("📐 Top-Down Pallet View (1 Layer)")
-    fig, ax = plt.subplots(figsize=(6, 5))
-    ax.set_xlim(0, pallet_length)
-    ax.set_ylim(0, pallet_width)
-    ax.set_title('Top-Down View of One Pallet Layer')
-    ax.set_xlabel(f'Length ({unit})')
-    ax.set_ylabel(f'Width ({unit})')
+    if view_option == "2D Top-Down":
+        st.subheader("📐 Top-Down Pallet View (1 Layer)")
+        fig, ax = plt.subplots(figsize=(6, 5))
+        ax.set_xlim(0, pallet_length)
+        ax.set_ylim(0, pallet_width)
+        ax.set_title('Top-Down View of One Pallet Layer')
+        ax.set_xlabel(f'Length ({unit})')
+        ax.set_ylabel(f'Width ({unit})')
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
-    ax.add_patch(patches.Rectangle((0, 0), pallet_length, pallet_width, edgecolor='black', facecolor='none', linewidth=2))
+        ax.add_patch(patches.Rectangle((0, 0), pallet_length, pallet_width, edgecolor='black', facecolor='none', linewidth=2))
 
-    x = 0
-    y = 0
-    units_drawn = 0
-    while y + unit_w <= pallet_width:
-        while x + unit_l <= pallet_length:
-            ax.add_patch(patches.Rectangle((x, y), unit_l, unit_w, edgecolor='blue', facecolor='lightblue'))
-            units_drawn += 1
+        x = 0
+        y = 0
+        units_drawn = 0
+        while y + unit_w <= pallet_width:
+            while x + unit_l <= pallet_length:
+                ax.add_patch(patches.Rectangle((x, y), unit_l, unit_w, edgecolor='blue', facecolor='lightblue'))
+                units_drawn += 1
+                if units_drawn >= min(units_per_layer, total_units):
+                    break
+                x += unit_l
             if units_drawn >= min(units_per_layer, total_units):
                 break
-            x += unit_l
-        if units_drawn >= min(units_per_layer, total_units):
-            break
-        x = 0
-        y += unit_w
-
-    st.pyplot(fig)
-
-    # 3D stack visualization
-    st.subheader("🔹 3D Stack View")
-    fig = plt.figure(figsize=(8, 6))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_title("3D Side View of Pallet Stack")
-    ax.set_xlabel(f"Length ({unit})")
-    ax.set_ylabel(f"Width ({unit})")
-    ax.set_zlabel(f"Height ({unit})")
-    ax.set_xlim(0, pallet_length)
-    ax.set_ylim(0, pallet_width)
-    ax.set_zlim(0, product_height * layers_per_pallet)
-
-    units_drawn = 0
-    for z in range(layers_per_pallet):
-        y = 0
-        while y + unit_w <= pallet_width:
             x = 0
-            while x + unit_l <= pallet_length:
+            y += unit_w
+
+        st.pyplot(fig)
+
+    else:
+        st.subheader("🔹 Interactive 3D Pallet Stack")
+
+        # Build Plotly Mesh3d Pallet + Boxes
+        objects = []
+        def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0):
+            return go.Mesh3d(
+                x=[x, x+dx, x+dx, x, x, x+dx, x+dx, x],
+                y=[y, y, y+dy, y+dy, y, y, y+dy, y+dy],
+                z=[z, z, z, z, z+dz, z+dz, z+dz, z+dz],
+                i=[0, 0, 0, 4, 4, 5],
+                j=[1, 2, 3, 5, 6, 6],
+                k=[2, 3, 1, 6, 7, 7],
+                opacity=opacity,
+                color=color,
+                flatshading=True
+            )
+
+        objects.append(create_box(0, 0, 0, pallet_length, pallet_width, 5.5, color='saddlebrown'))
+        z_start = 5.5
+        units_drawn = 0
+        for layer in range(layers_per_pallet):
+            y = 0
+            while y + unit_w <= pallet_width:
+                x = 0
+                while x + unit_l <= pallet_length:
+                    if units_drawn >= total_units:
+                        break
+                    objects.append(create_box(x, y, z_start + layer * product_height, unit_l, unit_w, product_height))
+                    units_drawn += 1
+                    x += unit_l
                 if units_drawn >= total_units:
                     break
-                box = [
-                    [x, y, z * product_height],
-                    [x + unit_l, y, z * product_height],
-                    [x + unit_l, y + unit_w, z * product_height],
-                    [x, y + unit_w, z * product_height],
-                    [x, y, (z + 1) * product_height],
-                    [x + unit_l, y, (z + 1) * product_height],
-                    [x + unit_l, y + unit_w, (z + 1) * product_height],
-                    [x, y + unit_w, (z + 1) * product_height],
-                ]
-                faces = [
-                    [box[0], box[1], box[2], box[3]],
-                    [box[4], box[5], box[6], box[7]],
-                    [box[0], box[1], box[5], box[4]],
-                    [box[2], box[3], box[7], box[6]],
-                    [box[1], box[2], box[6], box[5]],
-                    [box[4], box[7], box[3], box[0]],
-                ]
-                ax.add_collection3d(Poly3DCollection(faces, facecolors='lightblue', edgecolors='gray', linewidths=0.5, alpha=0.8))
-                units_drawn += 1
-                x += unit_l
+                y += unit_w
             if units_drawn >= total_units:
                 break
-            y += unit_w
-        if units_drawn >= total_units:
-            break
 
-    st.pyplot(fig)
+        fig3d = go.Figure(data=objects)
+        fig3d.update_layout(
+            scene=dict(
+                xaxis_title='Length',
+                yaxis_title='Width',
+                zaxis_title='Height',
+                aspectratio=dict(x=2, y=1.8, z=1.5),
+                camera=dict(eye=dict(x=1.5, y=1.5, z=1)),
+            ),
+            title="Interactive 3D Pallet Stack with Pallet Base",
+            margin=dict(l=0, r=0, t=40, b=0),
+            showlegend=False
+        )
+        components.html(fig3d.to_html(), height=600)
