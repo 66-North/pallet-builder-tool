@@ -191,8 +191,9 @@ if submitted:
                 if drawn >= min(units_per_layer, total_units):
                     break
                 for layer in range(layers_per_pallet):
-                z = z_start + layer * product_height
-                draw_box(ax, x, y, z, unit_l, unit_w, product_height)
+                    z = z_start + layer * product_height
+                    color = plt.cm.Blues(layer / max(1, layers_per_pallet))
+                    draw_box(ax, x, y, z, unit_l, unit_w, product_height, face_color=color)
                 drawn += 1
                 x += unit_l
             if drawn >= min(units_per_layer, total_units):
@@ -203,6 +204,8 @@ if submitted:
         ax.set_ylim(0, pallet_width)
         ax.set_zlim(0, z_start + product_height)
         ax.view_init(elev=25, azim=135)
+                # Draw transparent bounding box for full stack
+        draw_box(ax, 0, 0, z_start, pallet_length, pallet_width, layers_per_pallet * product_height, face_color='none', edge_color='gray', alpha=0.2)
         plt.tight_layout()
 
         buf = io.BytesIO()
