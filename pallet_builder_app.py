@@ -141,7 +141,8 @@ if submitted:
     else:
         st.subheader("🔹 Interactive 3D Pallet Stack")
 
-        def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0):
+        def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0'):
+    # Define the 8 corners of the cuboid
     # Define the 8 corners of the cuboid
     vertices = [
         [x, y, z],
