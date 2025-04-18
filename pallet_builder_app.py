@@ -5,6 +5,7 @@ import pandas as pd
 import base64
 from PIL import Image
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
+import io
 
 st.set_page_config(page_title="Pallet Builder Tool", layout="centered")
 
@@ -202,10 +203,9 @@ if submitted:
         ax.view_init(elev=25, azim=135)
         plt.tight_layout()
 
-                        import io
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
         plt.close()
         buf.seek(0)
         st.image(buf, caption="Static 3D Pallet View")
-        st.download_button("📥 Download Render (PNG)", data=buf, file_name="pallet_render.png", mime="image/png")", f, file_name="pallet_render.png", mime="image/png")
+        st.download_button("📥 Download Render (PNG)", data=buf, file_name="pallet_render.png", mime="image/png")
