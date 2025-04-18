@@ -144,7 +144,7 @@ if submitted:
 
         x = y = units_drawn = 0
         while y + unit_w <= pallet_width:
-            x = 0
+            x = layer * 0.1  # slight stagger in X by layer
             while x + unit_l <= pallet_length:
                 ax_top.add_patch(patches.Rectangle((x, y), unit_l, unit_w, edgecolor='blue', facecolor='lightblue'))
                 units_drawn += 1
@@ -210,7 +210,7 @@ if submitted:
         z_start = 5.5
         drawn = 0
         for layer in range(layers_per_pallet):
-            y = 0
+            y = layer * 0.1  # slight stagger in Y by layer
             color = plt.cm.Blues(layer / max(1, layers_per_pallet))
             while y + unit_w <= pallet_width:
                 x = 0
