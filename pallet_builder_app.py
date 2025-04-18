@@ -130,7 +130,7 @@ if submitted:
     href = f'<a href="data:file/csv;base64,{b64}" download="pallet_summary.csv">📥 Download Summary as CSV</a>'
     st.markdown(href, unsafe_allow_html=True)
 
-    view_detail = st.radio("3D Detail Level", ["Simplified (3 layers)", "Full Stack"])
+        view_detail = st.radio("3D Detail Level", ["Simplified (3 layers)", "Full Stack"])
 
     if view_option == "2D Top-Down":
         st.subheader("📐 Top-Down and Side Pallet Views")
@@ -164,7 +164,8 @@ if submitted:
         ax_side.set_xlabel(f'Length ({unit})')
         ax_side.set_ylabel(f'Height ({unit})')
         ax_side.grid(True, linestyle='--', linewidth=0.5)
-        for layer in range(layers_per_pallet) if view_detail == "Full Stack" else range(min(3, layers_per_pallet)):
+                layer_range = range(layers_per_pallet) if view_detail == "Full Stack" else range(min(3, layers_per_pallet))
+        for layer in layer_range:
             y_pos = 5.5 + layer * product_height
             x = 0
             while x + unit_l <= pallet_length:
