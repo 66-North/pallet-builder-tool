@@ -190,7 +190,9 @@ if submitted:
             while x + unit_l <= pallet_length:
                 if drawn >= min(units_per_layer, total_units):
                     break
-                draw_box(ax, x, y, z_start, unit_l, unit_w, product_height)
+                for layer in range(layers_per_pallet):
+                z = z_start + layer * product_height
+                draw_box(ax, x, y, z, unit_l, unit_w, product_height)
                 drawn += 1
                 x += unit_l
             if drawn >= min(units_per_layer, total_units):
