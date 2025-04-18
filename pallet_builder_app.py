@@ -162,7 +162,7 @@ if submitted:
         ax_side.set_xlabel(f'Length ({unit})')
         ax_side.set_ylabel(f'Height ({unit})')
         ax_side.grid(True, linestyle='--', linewidth=0.5)
-        for layer in range(layers_per_pallet):
+        for layer in reversed(range(layers_per_pallet)):
             y_pos = 5.5 + layer * product_height
             x = 0
             while x + unit_l <= pallet_length:
@@ -176,7 +176,7 @@ if submitted:
         st.subheader("🖼 Static 3D Pallet Render")
 
         def draw_box(ax, x, y, z, dx, dy, dz, face_color='skyblue', edge_color='black', alpha=1.0):
-            epsilon = 0.05
+            epsilon = 0.15
             x += epsilon
             y += epsilon
             z += epsilon
