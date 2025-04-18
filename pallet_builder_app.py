@@ -15,6 +15,7 @@ pallet_type = st.radio("Select Pallet Type", ["US Pallet (inches)", "EU Pallet (
 
 if pallet_type == "EU Pallet (cm)":
     unit = "cm"
+    weight_unit = "kg"
     pallet_length = 120
     pallet_width = 80
     pallet_height = 180
@@ -23,6 +24,7 @@ if pallet_type == "EU Pallet (cm)":
     product_height = 22
 else:
     unit = "in"
+    weight_unit = "lbs"
     pallet_length = 48
     pallet_width = 40
     pallet_height = 60
@@ -45,7 +47,7 @@ with st.form("pallet_input_form"):
         product_height = st.number_input(f"Product Height ({unit})", value=product_height)
 
     total_units = st.number_input("Total Units to Ship", value=20, step=1)
-    product_weight = st.number_input("Product Weight (kg)", value=5.0)
+    product_weight = st.number_input(f"Product Weight ({weight_unit})", value=5.0)
     rotation_allowed = st.checkbox("Allow Rotation", value=True)
 
     submitted = st.form_submit_button("Calculate & Visualize")
@@ -79,10 +81,10 @@ if submitted:
     st.write(f"**Max Units per Pallet:** {max_units_per_pallet}")
     st.write(f"**Total Pallets Needed:** {total_pallets_needed}")
     st.write(f"**Volume Utilization (one pallet):** {volume_utilization:.1f}%")
-    st.write(f"**Total Shipment Weight:** {total_weight:.1f} kg")
+    st.write(f"**Total Shipment Weight:** {total_weight:.1f} {weight_unit}")
 
     summary_df = pd.DataFrame({
-        "Metric": ["Units per Layer", "Layers per Pallet", "Max Units per Pallet", "Total Pallets Needed", "Volume Utilization (%)", "Total Weight (kg)"],
+        "Metric": ["Units per Layer", "Layers per Pallet", "Max Units per Pallet", "Total Pallets Needed", "Volume Utilization (%)", f"Total Weight ({weight_unit})"],
         "Value": [units_per_layer, layers_per_pallet, max_units_per_pallet, total_pallets_needed, round(volume_utilization, 1), round(total_weight, 1)]
     })
 
