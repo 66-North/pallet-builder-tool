@@ -131,20 +131,22 @@ if submitted:
     st.markdown(href, unsafe_allow_html=True)
 
     if view_option == "2D Top-Down":
-        st.subheader("📐 Top-Down Pallet View (1 Layer)")
-        fig, ax = plt.subplots(figsize=(6, 5))
-        ax.set_xlim(0, pallet_length)
-        ax.set_ylim(0, pallet_width)
-        ax.set_title('Top-Down View of One Pallet Layer')
-        ax.set_xlabel(f'Length ({unit})')
-        ax.set_ylabel(f'Width ({unit})')
-        ax.grid(True, linestyle='--', linewidth=0.5)
-        ax.add_patch(patches.Rectangle((0, 0), pallet_length, pallet_width, edgecolor='black', facecolor='none', linewidth=2))
+        st.subheader("📐 Top-Down and Side Pallet Views")
+
+        fig_top, ax_top = plt.subplots(figsize=(6, 4))
+        ax_top.set_xlim(0, pallet_length)
+        ax_top.set_ylim(0, pallet_width)
+        ax_top.set_title('Top-Down View (1 Layer)')
+        ax_top.set_xlabel(f'Length ({unit})')
+        ax_top.set_ylabel(f'Width ({unit})')
+        ax_top.grid(True, linestyle='--', linewidth=0.5)
+        ax_top.add_patch(patches.Rectangle((0, 0), pallet_length, pallet_width, edgecolor='black', facecolor='none', linewidth=2))
+
         x = y = units_drawn = 0
         while y + unit_w <= pallet_width:
             x = 0
             while x + unit_l <= pallet_length:
-                ax.add_patch(patches.Rectangle((x, y), unit_l, unit_w, edgecolor='blue', facecolor='lightblue'))
+                ax_top.add_patch(patches.Rectangle((x, y), unit_l, unit_w, edgecolor='blue', facecolor='lightblue'))
                 units_drawn += 1
                 if units_drawn >= min(units_per_layer, total_units):
                     break
@@ -152,7 +154,23 @@ if submitted:
             if units_drawn >= min(units_per_layer, total_units):
                 break
             y += unit_w
-        st.pyplot(fig)
+
+        fig_side, ax_side = plt.subplots(figsize=(6, 4))
+        ax_side.set_xlim(0, pallet_length)
+        ax_side.set_ylim(0, product_height * layers_per_pallet + 5.5)
+        ax_side.set_title('Side View (Stacked Height)')
+        ax_side.set_xlabel(f'Length ({unit})')
+        ax_side.set_ylabel(f'Height ({unit})')
+        ax_side.grid(True, linestyle='--', linewidth=0.5)
+        for layer in range(layers_per_pallet):
+            y_pos = 5.5 + layer * product_height
+            x = 0
+            while x + unit_l <= pallet_length:
+                ax_side.add_patch(patches.Rectangle((x, y_pos), unit_l, product_height, edgecolor='blue', facecolor='lightblue'))
+                x += unit_l
+
+        st.pyplot(fig_top)
+        st.pyplot(fig_side)
 
     else:
         st.subheader("🖼 Static 3D Pallet Render")
