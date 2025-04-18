@@ -186,6 +186,13 @@ if submitted:
     dx -= 2 * epsilon
     dy -= 2 * epsilon
     dz -= 2 * epsilon
+    epsilon = 0.05  # slight offset to avoid rendering artifacts
+    x += epsilon
+    y += epsilon
+    z += epsilon
+    dx -= 2 * epsilon
+    dy -= 2 * epsilon
+    dz -= 2 * epsilon
             verts = [
                 [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
                 [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
