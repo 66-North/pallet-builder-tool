@@ -159,10 +159,64 @@ if submitted:
     else:
         st.subheader("🖼 Static 3D Pallet Render")
         static_path = "/mnt/data/simplified_3d_pallet_render.png"
-        try:
-            img = Image.open(static_path)
-            st.image(img, caption="Static 3D Pallet View")
-            with open(static_path, "rb") as f:
-                st.download_button("📥 Download Render (PNG)", f, file_name="pallet_render.png", mime="image/png")
-        except FileNotFoundError:
-            st.warning("Static image not found. Upload or generate it to display.")
+        import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
+import numpy as np
+
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+
+        def draw_box(ax, x, y, z, dx, dy, dz, face_color='skyblue', edge_color='black', alpha=1.0):
+            verts = [
+                [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
+                [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
+            ]
+            faces = [
+                [verts[0], verts[1], verts[2], verts[3]],
+                [verts[4], verts[5], verts[6], verts[7]],
+                [verts[0], verts[1], verts[5], verts[4]],
+                [verts[2], verts[3], verts[7], verts[6]],
+                [verts[1], verts[2], verts[6], verts[5]],
+                [verts[4], verts[7], verts[3], verts[0]]
+            ]
+            edges = [
+                [verts[0], verts[1]], [verts[1], verts[2]], [verts[2], verts[3]], [verts[3], verts[0]],
+                [verts[4], verts[5]], [verts[5], verts[6]], [verts[6], verts[7]], [verts[7], verts[4]],
+                [verts[0], verts[4]], [verts[1], verts[5]], [verts[2], verts[6]], [verts[3], verts[7]]
+            ]
+            ax.add_collection3d(Poly3DCollection(faces, facecolors=face_color, edgecolors=edge_color, alpha=alpha))
+            ax.add_collection3d(Line3DCollection(edges, colors=edge_color, linewidths=0.8))
+
+        # Draw pallet
+        draw_box(ax, 0, 0, 0, pallet_length, pallet_width, 5.5, face_color='saddlebrown')
+
+        # Draw product boxes (1 layer)
+        drawn = 0
+        z_start = 5.5
+        y = 0
+        while y + unit_w <= pallet_width:
+            x = 0
+            while x + unit_l <= pallet_length:
+                if drawn >= min(units_per_layer, total_units):
+                    break
+                draw_box(ax, x, y, z_start, unit_l, unit_w, product_height)
+                drawn += 1
+                x += unit_l
+            if drawn >= min(units_per_layer, total_units):
+                break
+            y += unit_w
+
+        ax.set_xlim(0, pallet_length)
+        ax.set_ylim(0, pallet_width)
+        ax.set_zlim(0, z_start + product_height)
+        ax.view_init(elev=25, azim=135)
+
+        plt.tight_layout()
+        render_path = "/mnt/data/auto_generated_pallet_render.png"
+        plt.savefig(render_path)
+        plt.close()
+
+        img = Image.open(render_path)
+        st.image(img, caption="Static 3D Pallet View")
+        with open(render_path, "rb") as f:
+            st.download_button("📥 Download Render (PNG)", f, file_name="pallet_render.png", mime="image/png")            st.warning("Static image not found. Upload or generate it to display.")
