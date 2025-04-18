@@ -163,7 +163,7 @@ if submitted:
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 import numpy as np
 
-        fig = plt.figure(figsize=(10, 8))
+                fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
 
         def draw_box(ax, x, y, z, dx, dy, dz, face_color='skyblue', edge_color='black', alpha=1.0):
