@@ -202,11 +202,10 @@ if submitted:
         ax.view_init(elev=25, azim=135)
         plt.tight_layout()
 
-        render_path = "/mnt/data/auto_generated_pallet_render.png"
-        plt.savefig(render_path)
+                import io
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
         plt.close()
-
-        img = Image.open(render_path)
-        st.image(img, caption="Static 3D Pallet View")
-        with open(render_path, "rb") as f:
-            st.download_button("📥 Download Render (PNG)", f, file_name="pallet_render.png", mime="image/png")
+        buf.seek(0)
+        st.image(buf, caption="Static 3D Pallet View")
+        st.download_button("📥 Download Render (PNG)", data=buf, file_name="pallet_render.png", mime="image/png")", f, file_name="pallet_render.png", mime="image/png")
