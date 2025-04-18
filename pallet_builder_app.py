@@ -2,16 +2,15 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import pandas as pd
-import io
 import base64
-import plotly.graph_objects as go
-import streamlit.components.v1 as components
+from PIL import Image
 
 st.set_page_config(page_title="Pallet Builder Tool", layout="centered")
 
 st.title("📦 Pallet Builder Tool")
-st.write("Enter product and pallet dimensions to visualize your pallet stacking layout.")
+st.write("Enter product and pallet dimensions to calculate stack configuration, dimensions, and total weight.")
 
+# Pallet selection
 pallet_type = st.radio("Select Pallet Type", ["US Pallet (inches)", "EU Pallet (cm)"])
 
 # Presets
@@ -63,6 +62,9 @@ with st.form("pallet_input_form"):
     product_weight = st.number_input(f"Product Weight ({weight_unit})", value=product_weight)
     rotation_allowed = st.checkbox("Allow Rotation", value=True)
 
+    pallet_base_weight = st.number_input(f"Pallet Base Weight (avg ~38 {weight_unit})", value=38.0)
+    wrap_weight = st.number_input(f"Wrapping Material Weight (avg ~2 {weight_unit})", value=2.0)
+
     view_option = st.radio("Select Visualization View", ["2D Top-Down", "Static 3D Render"])
     submitted = st.form_submit_button("Calculate & Visualize")
 
@@ -88,30 +90,20 @@ if submitted:
     pallet_volume = pallet_length * pallet_width * pallet_height
     volume_utilization = used_volume / pallet_volume * 100
     total_weight = product_weight * total_units
+    total_stack_height = layers_per_pallet * product_height + 5.5
+    total_weight_gross = total_weight + pallet_base_weight + wrap_weight
+    dims_string = f"{pallet_length} × {pallet_width} × {int(total_stack_height)} {unit}"
 
-    st.subheader("📊 Summary")
+    st.subheader("📊 Pallet Summary")
     st.write(f"**Units per Layer:** {units_per_layer}")
     st.write(f"**Layers per Pallet:** {layers_per_pallet}")
     st.write(f"**Max Units per Pallet:** {max_units_per_pallet}")
     st.write(f"**Total Pallets Needed:** {total_pallets_needed}")
     st.write(f"**Volume Utilization (one pallet):** {volume_utilization:.1f}%")
-    st.write(f"**Total Shipment Weight:** {total_weight:.1f} {weight_unit}")
+    st.write(f"**Total Net Product Weight:** {total_weight:.1f} {weight_unit}")
+    st.write(f"**Gross Shipping Weight:** {total_weight_gross:.1f} {weight_unit}")
+    st.write(f"**Final Dimensions:** {dims_string}")
 
-        # Additional user inputs for real-world pallet estimates
-    st.markdown("---")
-    st.subheader("📏 Real-World Shipping Estimate")
-    pallet_base_weight = st.number_input("Pallet Base Weight (avg ~38 lbs)", value=38.0)
-    wrap_weight = st.number_input("Wrapping Material Weight (avg ~2 lbs)", value=2.0)
-
-    total_stack_height = layers_per_pallet * product_height + 5.5  # includes pallet
-    total_weight_gross = total_weight + pallet_base_weight + wrap_weight
-
-    dims_string = f"{pallet_length} × {pallet_width} × {int(total_stack_height)} {unit}"
-
-    st.markdown(f"**Estimated Palletized Dimensions:** {dims_string}")
-    st.markdown(f"**Estimated Gross Shipping Weight:** {total_weight_gross:.1f} {weight_unit}")
-
-        # Create DataFrame for display/export
     summary_data = {
         "Metric": [
             "Units per Layer",
@@ -119,7 +111,7 @@ if submitted:
             "Max Units per Pallet",
             "Total Pallets Needed",
             "Volume Utilization (%)",
-            f"Total Weight ({weight_unit})",
+            f"Net Product Weight ({weight_unit})",
             f"Gross Shipping Weight ({weight_unit})",
             f"Final Dimensions ({unit})"
         ],
@@ -134,13 +126,8 @@ if submitted:
             dims_string
         ]
     }
-    summary_df = pd.DataFrame(summary_data)"],
-        "Value": [units_per_layer, layers_per_pallet, max_units_per_pallet, total_pallets_needed, round(volume_utilization, 1), round(total_weight, 1)]
-    })"],
-        "Value": [units_per_layer, layers_per_pallet, max_units_per_pallet, total_pallets_needed, round(volume_utilization, 1), round(total_weight, 1)]
-    })
-
-    csv = summary_df.to_csv(index=False)
+    df = pd.DataFrame(summary_data)
+    csv = df.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()
     href = f'<a href="data:file/csv;base64,{b64}" download="pallet_summary.csv">📥 Download Summary as CSV</a>'
     st.markdown(href, unsafe_allow_html=True)
@@ -153,14 +140,11 @@ if submitted:
         ax.set_title('Top-Down View of One Pallet Layer')
         ax.set_xlabel(f'Length ({unit})')
         ax.set_ylabel(f'Width ({unit})')
-        ax.grid(True, which='both', linestyle='--', linewidth=0.5)
-
+        ax.grid(True, linestyle='--', linewidth=0.5)
         ax.add_patch(patches.Rectangle((0, 0), pallet_length, pallet_width, edgecolor='black', facecolor='none', linewidth=2))
-
-        x = 0
-        y = 0
-        units_drawn = 0
+        x = y = units_drawn = 0
         while y + unit_w <= pallet_width:
+            x = 0
             while x + unit_l <= pallet_length:
                 ax.add_patch(patches.Rectangle((x, y), unit_l, unit_w, edgecolor='blue', facecolor='lightblue'))
                 units_drawn += 1
@@ -169,19 +153,16 @@ if submitted:
                 x += unit_l
             if units_drawn >= min(units_per_layer, total_units):
                 break
-            x = 0
             y += unit_w
-
         st.pyplot(fig)
 
     else:
         st.subheader("🖼 Static 3D Pallet Render")
-        from PIL import Image
-        static_img_path = "/mnt/data/simplified_3d_pallet_render.png"
+        static_path = "/mnt/data/simplified_3d_pallet_render.png"
         try:
-            img = Image.open(static_img_path)
-            st.image(img, caption="Static 3D Pallet with Boxes")
-            with open(static_img_path, "rb") as f:
+            img = Image.open(static_path)
+            st.image(img, caption="Static 3D Pallet View")
+            with open(static_path, "rb") as f:
                 st.download_button("📥 Download Render (PNG)", f, file_name="pallet_render.png", mime="image/png")
         except FileNotFoundError:
-            st.warning("Render not available yet. Please generate or upload the image.")
+            st.warning("Static image not found. Upload or generate it to display.")
