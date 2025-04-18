@@ -207,9 +207,7 @@ if submitted:
                 zaxis_title='Height',
                 aspectratio=dict(x=1, y=1, z=2),
                 camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
-            ),),
             ),
-            title="3D Pallet Stack – Layer View + Stack Volume",
             margin=dict(l=0, r=0, t=40, b=0),
             showlegend=False
         )
