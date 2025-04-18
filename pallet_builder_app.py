@@ -63,7 +63,7 @@ with st.form("pallet_input_form"):
     product_weight = st.number_input(f"Product Weight ({weight_unit})", value=product_weight)
     rotation_allowed = st.checkbox("Allow Rotation", value=True)
 
-    view_option = st.radio("Select Visualization View", ["2D Top-Down", "3D Interactive"])
+    view_option = st.radio("Select Visualization View", ["2D Top-Down", "Static 3D Render"])
     submitted = st.form_submit_button("Calculate & Visualize")
 
 if submitted:
@@ -97,8 +97,24 @@ if submitted:
     st.write(f"**Volume Utilization (one pallet):** {volume_utilization:.1f}%")
     st.write(f"**Total Shipment Weight:** {total_weight:.1f} {weight_unit}")
 
+        # Additional user inputs for real-world pallet estimates
+    st.markdown("---")
+    st.subheader("📏 Real-World Shipping Estimate")
+    pallet_base_weight = st.number_input("Pallet Base Weight (avg ~38 lbs)", value=38.0)
+    wrap_weight = st.number_input("Wrapping Material Weight (avg ~2 lbs)", value=2.0)
+
+    total_stack_height = layers_per_pallet * product_height + 5.5  # includes pallet
+    total_weight_gross = total_weight + pallet_base_weight + wrap_weight
+
+    dims_string = f"{pallet_length} × {pallet_width} × {int(total_stack_height)} {unit}"
+
+    st.markdown(f"**Estimated Palletized Dimensions:** {dims_string}")
+    st.markdown(f"**Estimated Gross Shipping Weight:** {total_weight_gross:.1f} {weight_unit}")
+
     summary_df = pd.DataFrame({
         "Metric": ["Units per Layer", "Layers per Pallet", "Max Units per Pallet", "Total Pallets Needed", "Volume Utilization (%)", f"Total Weight ({weight_unit})"],
+        "Value": [units_per_layer, layers_per_pallet, max_units_per_pallet, total_pallets_needed, round(volume_utilization, 1), round(total_weight, 1)]
+    })"],
         "Value": [units_per_layer, layers_per_pallet, max_units_per_pallet, total_pallets_needed, round(volume_utilization, 1), round(total_weight, 1)]
     })
 
@@ -137,77 +153,13 @@ if submitted:
         st.pyplot(fig)
 
     else:
-        st.subheader("🔹 Interactive 3D Pallet Stack")
-
-    # Display static 3D render with outlines
-    from PIL import Image
-    static_path = "static_3d_pallet_outline.png"
-    try:
-        image = Image.open(f"/mnt/data/{static_path}")
-        st.image(image, caption="Static 3D Pallet Stack with Outlined Boxes", use_column_width=True)
-        with open(f"/mnt/data/{static_path}", "rb") as f:
-            btn = st.download_button(label="📥 Download 3D Render (PNG)", data=f, file_name="pallet_3d_render.png", mime="image/png")
-    except FileNotFoundError:
-        st.warning("Static image not available yet.")
-
-        def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0):
-            vertices = [
-                [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
-                [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
-            ]
-            faces = [
-                (0, 1, 2), (0, 2, 3),
-                (4, 5, 6), (4, 6, 7),
-                (0, 1, 5), (0, 5, 4),
-                (1, 2, 6), (1, 6, 5),
-                (2, 3, 7), (2, 7, 6),
-                (3, 0, 4), (3, 4, 7)
-            ]
-            x_vals, y_vals, z_vals = zip(*vertices)
-            i, j, k = zip(*faces)
-            return go.Mesh3d(
-                x=x_vals, y=y_vals, z=z_vals,
-                i=i, j=j, k=k,
-                opacity=opacity,
-                color=color,
-                flatshading=True
-            )
-
-        objects = []
-        pallet_height_actual = 5.5
-        objects.append(create_box(0, 0, 0, pallet_length, pallet_width, pallet_height_actual, color='saddlebrown'))
-
-        # Render 1 layer of boxes
-        z_start = pallet_height_actual
-        units_drawn = 0
-        y = 0
-        while y + unit_w <= pallet_width:
-            x = 0
-            while x + unit_l <= pallet_length:
-                if units_drawn >= min(units_per_layer, total_units):
-                    break
-                objects.append(create_box(x, y, z_start, unit_l, unit_w, product_height))
-                units_drawn += 1
-                x += unit_l
-            if units_drawn >= min(units_per_layer, total_units):
-                break
-            y += unit_w
-
-        # Add transparent bounding box to show full stack height
-        stack_height = layers_per_pallet * product_height
-        objects.append(create_box(0, 0, pallet_height_actual, pallet_length, pallet_width, stack_height, color='lightgray', opacity=0.1))
-
-        fig3d = go.Figure(data=objects)
-        fig3d.update_layout(
-            scene=dict(
-                xaxis_title='Length',
-                yaxis_title='Width',
-                zaxis_title='Height',
-                aspectratio=dict(x=1, y=1, z=2),
-                camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
-            ),
-            margin=dict(l=0, r=0, t=40, b=0),
-            showlegend=False,
-            title="3D Pallet Stack – Layer View + Stack Volume"
-        )
-        components.html(fig3d.to_html(), height=600)
+        st.subheader("🖼 Static 3D Pallet Render")
+        from PIL import Image
+        static_img_path = "/mnt/data/simplified_3d_pallet_render.png"
+        try:
+            img = Image.open(static_img_path)
+            st.image(img, caption="Static 3D Pallet with Boxes")
+            with open(static_img_path, "rb") as f:
+                st.download_button("📥 Download Render (PNG)", f, file_name="pallet_render.png", mime="image/png")
+        except FileNotFoundError:
+            st.warning("Render not available yet. Please generate or upload the image.")
