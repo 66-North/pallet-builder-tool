@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import pandas as pd
 import base64
+import io
 from PIL import Image
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
-import io
 
 st.set_page_config(page_title="Pallet Builder Tool", layout="centered")
 
@@ -175,24 +175,14 @@ if submitted:
     else:
         st.subheader("🖼 Static 3D Pallet Render")
 
-        fig = plt.figure(figsize=(10, 8))
-        ax = fig.add_subplot(111, projection='3d')
-
         def draw_box(ax, x, y, z, dx, dy, dz, face_color='skyblue', edge_color='black', alpha=1.0):
-    epsilon = 0.05  # slight offset to avoid rendering artifacts
-    x += epsilon
-    y += epsilon
-    z += epsilon
-    dx -= 2 * epsilon
-    dy -= 2 * epsilon
-    dz -= 2 * epsilon
-    epsilon = 0.05  # slight offset to avoid rendering artifacts
-    x += epsilon
-    y += epsilon
-    z += epsilon
-    dx -= 2 * epsilon
-    dy -= 2 * epsilon
-    dz -= 2 * epsilon
+            epsilon = 0.05
+            x += epsilon
+            y += epsilon
+            z += epsilon
+            dx -= 2 * epsilon
+            dy -= 2 * epsilon
+            dz -= 2 * epsilon
             verts = [
                 [x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z],
                 [x, y, z + dz], [x + dx, y, z + dz], [x + dx, y + dy, z + dz], [x, y + dy, z + dz]
@@ -213,32 +203,32 @@ if submitted:
             ax.add_collection3d(Poly3DCollection(faces, facecolors=face_color, edgecolors=edge_color, alpha=alpha))
             ax.add_collection3d(Line3DCollection(edges, colors=edge_color, linewidths=0.8))
 
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
         draw_box(ax, 0, 0, 0, pallet_length, pallet_width, 5.5, face_color='saddlebrown')
+
         z_start = 5.5
         drawn = 0
-        y = 0
-        while y + unit_w <= pallet_width:
-            x = 0
-            while x + unit_l <= pallet_length:
-                if drawn >= min(units_per_layer, total_units):
-                    break
-                for layer in range(layers_per_pallet):
+        for layer in range(layers_per_pallet):
+            y = 0
+            color = plt.cm.Blues(layer / max(1, layers_per_pallet))
+            while y + unit_w <= pallet_width:
+                x = 0
+                while x + unit_l <= pallet_length:
+                    if drawn >= min(max_units_per_pallet, total_units):
+                        break
                     z = z_start + layer * product_height
-                    color = plt.cm.Blues(layer / max(1, layers_per_pallet))
                     draw_box(ax, x, y, z, unit_l, unit_w, product_height, face_color=color)
-                drawn += 1
-                x += unit_l
-            if drawn >= min(units_per_layer, total_units):
-                break
-            y += unit_w
+                    drawn += 1
+                    x += unit_l
+                if drawn >= min(max_units_per_pallet, total_units):
+                    break
+                y += unit_w
 
         ax.set_xlim(0, pallet_length)
         ax.set_ylim(0, pallet_width)
-        ax.set_zlim(0, z_start + product_height)
+        ax.set_zlim(0, z_start + layers_per_pallet * product_height)
         ax.view_init(elev=25, azim=135)
-                # Draw transparent bounding box for full stack
-        # Transparent bounding box disabled due to rendering issues
-        # draw_box(ax, 0, 0, z_start, pallet_length, pallet_width, layers_per_pallet * product_height, face_color='none', edge_color='gray', alpha=0.2)
         plt.tight_layout()
 
         buf = io.BytesIO()
