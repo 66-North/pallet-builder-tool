@@ -140,8 +140,6 @@ if submitted:
     else:
         st.subheader("🔹 Interactive 3D Pallet Stack")
 
-        # Build Plotly Mesh3d Pallet + Boxes
-        objects = []
         def create_box(x, y, z, dx, dy, dz, color='lightblue', opacity=1.0):
             return go.Mesh3d(
                 x=[x, x+dx, x+dx, x, x, x+dx, x+dx, x],
@@ -155,24 +153,29 @@ if submitted:
                 flatshading=True
             )
 
-        objects.append(create_box(0, 0, 0, pallet_length, pallet_width, 5.5, color='saddlebrown'))
-        z_start = 5.5
+        objects = []
+        pallet_height_actual = 5.5
+        objects.append(create_box(0, 0, 0, pallet_length, pallet_width, pallet_height_actual, color='saddlebrown'))
+
+        # Render 1 layer of boxes
+        z_start = pallet_height_actual
         units_drawn = 0
-        for layer in range(layers_per_pallet):
-            y = 0
-            while y + unit_w <= pallet_width:
-                x = 0
-                while x + unit_l <= pallet_length:
-                    if units_drawn >= total_units:
-                        break
-                    objects.append(create_box(x, y, z_start + layer * product_height, unit_l, unit_w, product_height))
-                    units_drawn += 1
-                    x += unit_l
-                if units_drawn >= total_units:
+        y = 0
+        while y + unit_w <= pallet_width:
+            x = 0
+            while x + unit_l <= pallet_length:
+                if units_drawn >= min(units_per_layer, total_units):
                     break
-                y += unit_w
-            if units_drawn >= total_units:
+                objects.append(create_box(x, y, z_start, unit_l, unit_w, product_height))
+                units_drawn += 1
+                x += unit_l
+            if units_drawn >= min(units_per_layer, total_units):
                 break
+            y += unit_w
+
+        # Add transparent bounding box to show full stack height
+        stack_height = layers_per_pallet * product_height
+        objects.append(create_box(0, 0, pallet_height_actual, pallet_length, pallet_width, stack_height, color='lightgray', opacity=0.1))
 
         fig3d = go.Figure(data=objects)
         fig3d.update_layout(
@@ -183,7 +186,7 @@ if submitted:
                 aspectratio=dict(x=2, y=1.8, z=1.5),
                 camera=dict(eye=dict(x=1.5, y=1.5, z=1)),
             ),
-            title="Interactive 3D Pallet Stack with Pallet Base",
+            title="3D Pallet Stack – Layer View + Stack Volume",
             margin=dict(l=0, r=0, t=40, b=0),
             showlegend=False
         )
