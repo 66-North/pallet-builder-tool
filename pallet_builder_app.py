@@ -111,8 +111,30 @@ if submitted:
     st.markdown(f"**Estimated Palletized Dimensions:** {dims_string}")
     st.markdown(f"**Estimated Gross Shipping Weight:** {total_weight_gross:.1f} {weight_unit}")
 
-    summary_df = pd.DataFrame({
-        "Metric": ["Units per Layer", "Layers per Pallet", "Max Units per Pallet", "Total Pallets Needed", "Volume Utilization (%)", f"Total Weight ({weight_unit})"],
+        # Create DataFrame for display/export
+    summary_data = {
+        "Metric": [
+            "Units per Layer",
+            "Layers per Pallet",
+            "Max Units per Pallet",
+            "Total Pallets Needed",
+            "Volume Utilization (%)",
+            f"Total Weight ({weight_unit})",
+            f"Gross Shipping Weight ({weight_unit})",
+            f"Final Dimensions ({unit})"
+        ],
+        "Value": [
+            units_per_layer,
+            layers_per_pallet,
+            max_units_per_pallet,
+            total_pallets_needed,
+            round(volume_utilization, 1),
+            round(total_weight, 1),
+            round(total_weight_gross, 1),
+            dims_string
+        ]
+    }
+    summary_df = pd.DataFrame(summary_data)"],
         "Value": [units_per_layer, layers_per_pallet, max_units_per_pallet, total_pallets_needed, round(volume_utilization, 1), round(total_weight, 1)]
     })"],
         "Value": [units_per_layer, layers_per_pallet, max_units_per_pallet, total_pallets_needed, round(volume_utilization, 1), round(total_weight, 1)]
